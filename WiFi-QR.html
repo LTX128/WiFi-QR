@@ -1,0 +1,395 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>QR Code Wi-Fi dynamique & stylé</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0; padding: 0;
+    font-family: 'Montserrat', sans-serif;
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    color: #e0e6f0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .container {
+    background: rgba(30, 40, 55, 0.95);
+    padding: 40px 50px;
+    border-radius: 25px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+    max-width: 850px;
+    width: 90%;
+    display: flex;
+    gap: 40px;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+  }
+  .inputs {
+    flex: 1 1 320px;
+    min-width: 280px;
+  }
+  .inputs h1 {
+    margin-bottom: 35px;
+    font-weight: 700;
+    font-size: 2.4rem;
+    text-align: center;
+    color: #4fc3f7;
+    letter-spacing: 1.3px;
+    text-shadow: 0 0 10px #29b6f6;
+  }
+  label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 10px;
+    margin-top: 25px;
+    font-size: 1.15rem;
+    color: #81d4fa;
+    text-shadow: 0 0 4px #0288d1;
+  }
+  input[type="text"], input[type="password"], select {
+    width: 100%;
+    padding: 14px 18px;
+    border-radius: 12px;
+    border: none;
+    font-size: 1.1rem;
+    outline: none;
+    background: #1f3144;
+    color: #e0e6f0;
+    box-shadow: inset 0 0 8px #0288d1;
+    transition: box-shadow 0.35s ease;
+  }
+  input[type="text"]:focus, input[type="password"]:focus, select:focus {
+    box-shadow: 0 0 15px #4fc3f7;
+    background: #29465b;
+  }
+  .qr-container {
+    flex: 0 0 280px;
+    text-align: center;
+    position: relative;
+    perspective: 600px;
+  }
+  #qrcode {
+    background: #ffffff;
+    border-radius: 22px;
+    box-shadow:
+      0 8px 20px rgba(79, 195, 247, 0.4),
+      inset 0 0 30px #29b6f6;
+    width: 280px;
+    height: 280px;
+    margin: 0 auto;
+    user-select: none;
+    cursor: pointer;
+    transform-style: preserve-3d;
+    transition: transform 0.8s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.5s ease;
+    opacity: 1;
+  }
+  .qr-animate {
+    animation: qrRotateFade 0.8s ease forwards;
+  }
+  @keyframes qrRotateFade {
+    0% {
+      opacity: 0;
+      transform: rotateY(-30deg) scale(0.85);
+    }
+    50% {
+      opacity: 1;
+      transform: rotateY(15deg) scale(1.05);
+    }
+    100% {
+      opacity: 1;
+      transform: rotateY(0deg) scale(1);
+    }
+  }
+  .footer {
+    width: 100%;
+    text-align: center;
+    margin-top: 45px;
+    color: #a9cce3;
+    font-size: 0.9rem;
+    user-select: none;
+  }
+  /* Responsive */
+  @media (max-width: 720px) {
+    .container {
+      flex-direction: column;
+      padding: 35px 25px;
+    }
+    .inputs, .qr-container {
+      flex: unset;
+      width: 100%;
+    }
+    #qrcode {
+      width: 260px;
+      height: 260px;
+      margin: 0 auto;
+    }
+  }
+</style>
+</head>
+<body>
+  <div class="container" role="main" aria-label="Générateur QR Code Wi-Fi">
+    <div class="inputs">
+      <h1>Générateur QR Code Wi-Fi</h1>
+      <form id="wifiForm" onsubmit="return false;">
+        <label for="ssid">Nom du réseau (SSID)</label>
+        <input type="text" id="ssid" placeholder="Ex : MaBox123" autocomplete="off" required aria-required="true" />
+
+        <label for="password">Mot de passe</label>
+        <input type="password" id="password" placeholder="••••••••••" autocomplete="off" aria-describedby="securityInfo" />
+
+        <label for="encryption">Type de sécurité</label>
+        <select id="encryption" aria-describedby="securityInfo">
+          <option value="WPA">WPA/WPA2</option>
+          <option value="WEP">WEP</option>
+          <option value="nopass">Aucune</option>
+        </select>
+
+        <div id="securityInfo" style="font-size:0.8rem; color:#81d4fa; margin-top:6px;">
+          * Le mot de passe est optionnel si la sécurité est "Aucune"
+        </div>
+      </form>
+    </div>
+    <div class="qr-container" aria-live="polite" aria-atomic="true">
+      <div id="qrcode" title="QR Code Wi-Fi" tabindex="0" role="img" aria-label="QR Code Wi-Fi"></div>
+      <p style="margin-top:15px; font-weight:600; color:#4fc3f7; text-shadow: 0 0 6px #29b6f6;">
+        Scanne ce QR code pour te connecter
+      </p>
+    </div>
+  </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+  const qrcodeContainer = document.getElementById("qrcode");
+  let qrcode = new QRCode(qrcodeContainer, {
+    width: 280,
+    height: 280,
+    colorDark: "#004d40",
+    colorLight: "#ffffff",
+    correctLevel: QRCode.CorrectLevel.H
+  });
+
+  function getWiFiString(ssid, password, encryption) {
+    if (!ssid) return "";
+    if (encryption === "nopass") {
+      return `WIFI:T:nopass;S:${ssid};;`;
+    } else {
+      return `WIFI:T:${encryption};S:${ssid};P:${password};;`;
+    }
+  }
+
+  function animateQRCode() {
+    qrcodeContainer.classList.remove("qr-animate");
+    // trigger reflow to restart animation
+    void qrcodeContainer.offsetWidth;
+    qrcodeContainer.classList.add("qr-animate");
+  }
+
+  function updateQRCode() {
+    const ssid = document.getElementById("ssid").value.trim();
+    const password = document.getElementById("password").value;
+    const encryption = document.getElementById("encryption").value;
+
+    if (ssid === "") {
+      qrcode.clear();
+      return;
+    }
+    if (encryption !== "nopass" && password === "") {
+      qrcode.clear();
+      return;
+    }
+
+    const wifiString = getWiFiString(ssid, password, encryption);
+    qrcode.makeCode(wifiString);
+    animateQRCode();
+  }
+
+  document.getElementById("ssid").addEventListener("input", updateQRCode);
+  document.getElementById("password").addEventListener("input", updateQRCode);
+  document.getElementById("encryption").addEventListener("change", updateQRCode);
+
+  updateQRCode();
+</script>
+</body>
+</html><style>@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
+
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0; padding: 0;
+  font-family: 'Montserrat', sans-serif;
+  background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+  color: #e0e6f0;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.container {
+  background: rgba(30, 40, 55, 0.95);
+  padding: 50px 60px;
+  border-radius: 25px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+  max-width: 850px;
+  width: 90%;
+  display: flex;
+  gap: 60px;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+}
+.inputs {
+  flex: 1 1 300px;
+  min-width: 280px;
+}
+.inputs h1 {
+  margin-bottom: 35px;
+  font-weight: 700;
+  font-size: 2.4rem;
+  text-align: center;
+  color: #4fc3f7;
+  letter-spacing: 1.3px;
+  text-shadow: 0 0 10px #29b6f6;
+}
+label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 10px;
+  margin-top: 25px;
+  font-size: 1.15rem;
+  color: #81d4fa;
+  text-shadow: 0 0 4px #0288d1;
+}
+input[type="text"], input[type="password"], select {
+  width: 100%;
+  padding: 14px 18px;
+  border-radius: 12px;
+  border: none;
+  font-size: 1.1rem;
+  outline: none;
+  background: #1f3144;
+  color: #e0e6f0;
+  box-shadow: inset 0 0 8px #0288d1;
+  transition: box-shadow 0.35s ease;
+}
+input[type="text"]:focus, input[type="password"]:focus, select:focus {
+  box-shadow: 0 0 15px #4fc3f7;
+  background: #29465b;
+}
+.qr-container {
+  flex: 0 0 320px;
+  text-align: center;
+  position: relative;
+  perspective: 600px;
+}
+canvas {
+  background: #ffffff;
+  border-radius: 22px;
+  box-shadow:
+    0 8px 20px rgba(79, 195, 247, 0.4),
+    inset 0 0 30px #29b6f6;
+  max-width: 320px;
+  width: 100%;
+  height: auto;
+  user-select: none;
+  cursor: pointer;
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55), opacity 0.4s ease;
+  opacity: 1;
+}
+.footer {
+  width: 100%;
+  text-align: center;
+  margin-top: 45px;
+  color: #a9cce3;
+  font-size: 0.9rem;
+  user-select: none;
+}
+.qr-animate {
+  animation: qrRotateFade 0.8s ease forwards;
+}
+@keyframes qrRotateFade {
+  0% {
+    opacity: 0;
+    transform: rotateY(-30deg) scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: rotateY(15deg) scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: rotateY(0deg) scale(1);
+  }
+}
+/* Responsive */
+@media (max-width: 720px) {
+  .container {
+    flex-direction: column;
+    padding: 35px 25px;
+  }
+  .inputs, .qr-container {
+    flex: unset;
+    width: 100%;
+  }
+  canvas {
+    max-width: 260px;
+    margin: 0 auto;
+  }
+}</style><script>const qrcodeContainer = document.getElementById("qrcode");
+let qrcode = null;
+
+function getWiFiString(ssid, password, encryption) {
+  if (!ssid) return "";
+  if (encryption === "nopass") {
+    return `WIFI:T:nopass;S:${ssid};;`;
+  } else {
+    return `WIFI:T:${encryption};S:${ssid};P:${password};;`;
+  }
+}
+
+function updateQRCode() {
+  const ssid = document.getElementById("ssid").value.trim();
+  const password = document.getElementById("password").value;
+  const encryption = document.getElementById("encryption").value;
+
+  if (ssid === "") {
+    qrcodeContainer.innerHTML = "";
+    return;
+  }
+  if (encryption !== "nopass" && password === "") {
+    qrcodeContainer.innerHTML = "";
+    return;
+  }
+
+  const wifiString = getWiFiString(ssid, password, encryption);
+
+  if (qrcode) {
+    qrcode.clear();
+    qrcode.makeCode(wifiString);
+  } else {
+    qrcode = new QRCode(qrcodeContainer, {
+      text: wifiString,
+      width: 260,
+      height: 260,
+      colorDark: "#004d40",
+      colorLight: "#ffffff",
+      correctLevel: QRCode.CorrectLevel.H
+    });
+  }
+}
+
+document.getElementById("ssid").addEventListener("input", updateQRCode);
+document.getElementById("password").addEventListener("input", updateQRCode);
+document.getElementById("encryption").addEventListener("change", updateQRCode);
+
+// Initial call to show empty or default
+updateQRCode();</script>
